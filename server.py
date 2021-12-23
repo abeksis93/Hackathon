@@ -1,16 +1,24 @@
 import socket
 import threading
 from scapy.all import *
-
+from termcolor import *
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
 SERVER_PORT = 26262
 DEST_UDP_PORT = 12026
-FORMAT = 'ASCI'
+FORMAT = 'utf-8'
 ADDRESS = (SERVER_IP, SERVER_PORT)
 MAGIC_COOKIE = "0xabcddcba"
 MESSAGE_TYPE = "0x2"
-
+HEADER = '\033[95m'
+OKBLUE = '\033[94m'
+OKCYAN = '\033[96m'
+OKGREEN = '\033[92m'
+WARNING = '\033[93m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
 
 class Server:
     def __init__(self):
@@ -83,7 +91,6 @@ class Server:
         while time.time() < max_time:
             address = ('<broadcast>', DEST_UDP_PORT)
             self.udp_socket.sendto(message, address)
-            # print(f'Broadcast message number {counter} sent')
             time.sleep(1)
         self.broadcasting = False
 
