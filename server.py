@@ -6,10 +6,10 @@ import random
 import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
-SERVER_PORT = 26262
-DEST_UDP_PORT = 12026
+SERVER_TCP_PORT = 26262
+DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
-TCP_ADDRESS = (SERVER_IP, SERVER_PORT)
+TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
 UDP_ADDRESS = (SERVER_IP, 20262)
 MAGIC_COOKIE = 0xabcddcba
 MESSAGE_TYPE = 0x2
@@ -24,16 +24,19 @@ BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
 
 class Server:
+    '''
+    A class representing a server with 2 sockets: UDP and TCP
+    allowing communication with a client for a simple math problems game
+    '''
+
     def __init__(self):
-        """
-        explain this shit
-        """        
+        """ initiate 2 sockets: UDP and TCP and set IP address"""       
         self.ip = SERVER_IP
         try:
             socket.inet_aton(self.ip)
         except:
             print("There was a problem trying to get the server's IP address.")
-        self.port = SERVER_PORT
+        self.port = SERVER_TCP_PORT
         try:
             self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except:
@@ -42,15 +45,11 @@ class Server:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except:
             print("There is a problem with the server's TCP socket.")
-        print(self.ip)
         self.broadcasting = False
         self.available = True
-        self.clients = {}
 
     def start(self):
-        """
-        explain this shit
-        """
+        """ bind the sockets to the server and start listening for connection requests """
         self.udp_socket.bind(UDP_ADDRESS)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.tcp_socket.bind(TCP_ADDRESS)
@@ -62,16 +61,12 @@ class Server:
 
 
     def stop(self):
-        """
-        explain this shit
-        """
+        """ stop the server """
         self.tcp_socket.close()
         self.udp_socket.close()
 
     def thread_handler(self):
-        """
-        explain this shit
-        """
+        """ handeling broadcasting and listening in multithreading """
         broadcast_thread = threading.Thread(target=self.broadcast_handler)
         listen_thread = threading.Thread(target=self.client_handler)
         broadcast_thread.start()
@@ -84,14 +79,7 @@ class Server:
         """
         explain this shit
         """
-        while self.broadcasting:
-            try:
-                client_socket, address = self.tcp_socket.accept()
-                client_name = client_socket.recv(1024).strip('\n')
-                print(f'Team {client_name} has connected to server!')
-                self.clients[client_name] = (client_socket, address)
-            except:
-                continue        
+        pass
 
     def broadcast_handler(self):
         """
@@ -135,9 +123,6 @@ class Server:
                 validQ = True
                 question = 'What is {} {} {}?\n'.format(num1, op, num2)
         return answer, question
-
-    def calculator(self):
-        pass
 
 
 # def main():
