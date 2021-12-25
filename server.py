@@ -77,7 +77,7 @@ class Server:
 
     def client_handler(self):
         """
-        explain this shit
+        explain this shit1
         """
         while self.broadcasting:
             try:
