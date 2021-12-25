@@ -47,6 +47,7 @@ class Server:
             print("There is a problem with the server's TCP socket.")
         self.broadcasting = False
         self.available = True
+        clients = {}
 
     def start(self):
         """ bind the sockets to the server and start listening for connection requests """
