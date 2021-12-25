@@ -2,6 +2,8 @@ import socket
 import threading
 from scapy.all import *
 from termcolor import *
+import random
+import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
 SERVER_PORT = 26262
@@ -52,6 +54,7 @@ class Server:
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.tcp_socket.bind(TCP_ADDRESS)
         self.tcp_socket.listen(1)
+        print("Server started, listening on IP address {}\n".format(SERVER_IP))
         self.thread_handler()
         self.tcp_socket.close()
         self.udp_socket.close()
@@ -100,7 +103,30 @@ class Server:
 
     
     def question_generator(self):
-        pass
+        ops = {'+':operator.add,
+           '-':operator.sub,
+           '*':operator.mul,
+           '/':operator.truediv}
+        validQ = False
+        while not validQ:
+            op = random.choice(list(ops.keys()))
+            if op == '*':
+                num1 = random.randint(0,3)
+                num2 = random.randint(0,3)   
+            elif op == '/':
+                num1 = random.randint(0,12)
+                num2 = random.randint(1,10) # no 0's to protect against divide-by-zero
+            elif op == '+':
+                num1 = random.randint(0,4)
+                num2 = random.randint(0,5)
+            else: # op is -
+                num1 = random.randint(0,11)
+                num2 = random.randint(0,10)
+            answer = ops.get(op)(num1,num2)
+            if str(answer).isdigit():
+                validQ = True
+                question = 'What is {} {} {}?\n'.format(num1, op, num2)
+        return answer, question
 
     def calculator(self):
         pass
