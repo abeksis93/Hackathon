@@ -42,28 +42,28 @@ class Server:
         except:
             print("There is a problem with the server's UPD socket.")
         try:
-            self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except:
             print("There is a problem with the server's TCP socket.")
         self.broadcasting = False
         self.available = True
-        clients = {}
+        self.clients = {}
 
     def start(self):
         """ bind the sockets to the server and start listening for connection requests """
         self.udp_socket.bind(UDP_ADDRESS)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.tcp_socket.bind(TCP_ADDRESS)
-        self.tcp_socket.listen(1)
+        self.welcome_socket.bind(TCP_ADDRESS)
+        self.welcome_socket.listen(1)
         print("Server started, listening on IP address {}\n".format(SERVER_IP))
         self.thread_handler()
-        self.tcp_socket.close()
+        self.welcome_socket.close()
         self.udp_socket.close()
 
 
     def stop(self):
         """ stop the server """
-        self.tcp_socket.close()
+        self.welcome_socket.close()
         self.udp_socket.close()
 
     def thread_handler(self):
@@ -78,20 +78,25 @@ class Server:
 
     def client_handler(self):
         """
-        explain this shit1
+        accept only 2 clients per game
         """
         while self.broadcasting:
-            try:
-                client_details = self.tcp_socket.accept()
-                client_name = client_details[0].recv(1024).strip('\n')
-                print(f'Team {client_name} has connected to server!')
-                self.clients[client_name] = client_details
-            except:
-                continue 
+            if len(self.clients) == 2:
+                break
+            else:
+                try:
+                    new_tcp_socket, address = self.welcome_socket.accept()
+                    client_details = (new_tcp_socket, address)
+                    client_name = new_tcp_socket.recv(1024).decode().strip('\n')
+                    print(f'Team {client_name} has connected to server!')
+                    self.clients[client_name] = client_details
+                except:
+                    continue 
+         
 
     def broadcast_handler(self):
         """
-        explain this shit
+        send offers to connect to clients
         """
         message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.tcp_port)
         max_time = time.time() + 10
@@ -102,8 +107,45 @@ class Server:
             time.sleep(1)
         self.broadcasting = False
 
+
     def competition(self):
-        pass
+        """
+        
+        """
+        answer, question = self.question_generator()
+        player1 = self.clients.keys()[0]
+        player2 = self.clients.keys()[1]
+        message = "Welcome to Quick Maths.\nPlayer 1: {}\nPlayer 2: {}\n==\nPlease answer the following question as fast as you can:\n{}".format(player1, player2, question)
+        try:
+            self.tcp_socket.send(message.encode())
+        except:
+            print("socket connection broken")
+        max_time = time.time() + 10
+        while time.time() < max_time:
+            handle_client1 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[0], answer))
+            handle_client2 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[1], answer))
+            handle_client1.start()
+            handle_client2.start()
+            handle_client1.join(10)
+            handle_client2.join(10)
+            if handle_client1.is_alive() and handle_client2.is_alive():
+                print("Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer))
+                break
+                
+    
+    def competition_handler(self, client_name, answer):
+        """
+        
+        """
+        message = self.clients[client_name][0].recv(1024).decode().strip('\n')
+        if message == answer:
+            print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, client_name))
+        else:
+            for i in range(len(self.clients.keys())):
+                if self.clients[i] != client_name:
+                    print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, self.clients[i]))
+                    break
+        
 
     
     def question_generator(self):
