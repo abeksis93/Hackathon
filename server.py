@@ -43,6 +43,7 @@ class Server:
         print(self.ip)
         self.broadcasting = False
         self.available = True
+        self.clients = {}
 
     def start(self):
         """
@@ -80,7 +81,14 @@ class Server:
         """
         explain this shit
         """
-        pass
+        while self.broadcasting:
+            try:
+                client_socket, address = self.tcp_socket.accept()
+                client_name = client_socket.recv(1024).strip('\n')
+                print(f'Team {client_name} has connected to server!')
+                self.clients[client_name] = (client_socket, address)
+            except:
+                continue        
 
     def broadcast_handler(self):
         """
