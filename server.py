@@ -5,8 +5,8 @@ from termcolor import *
 import random
 import operator
 
-# SERVER_IP = socket.gethostbyname(socket.gethostname())
-SERVER_IP = get_if_addr('eth1')
+SERVER_IP = socket.gethostbyname(socket.gethostname())
+# SERVER_IP = get_if_addr('eth1')
 SERVER_TCP_PORT = 26262
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
