@@ -36,7 +36,7 @@ class Server:
             socket.inet_aton(self.ip)
         except:
             print("There was a problem trying to get the server's IP address.")
-        self.port = SERVER_TCP_PORT
+        self.tcp_port = SERVER_TCP_PORT
         try:
             self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except:
@@ -79,21 +79,13 @@ class Server:
         """
         explain this shit
         """
-        while self.broadcasting:
-            try:
-                client_details = self.tcp_socket.accept()
-                client_name = client_details[0].recv(1024).strip('\n')
-                print(f'Team {client_name} has connected to server!')
-                self.clients[client_name] = client_details
-            except:
-                continue        
-
+        pass
 
     def broadcast_handler(self):
         """
         explain this shit
         """
-        message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.port)
+        message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.tcp_port)
         max_time = time.time() + 10
         self.broadcasting = True
         while time.time() < max_time:
