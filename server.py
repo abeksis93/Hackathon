@@ -6,7 +6,7 @@ import random
 import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
-SERVER_TCP_PORT = 26262
+SERVER_TCP_PORT = 16262
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
 TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
@@ -55,10 +55,19 @@ class Server:
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.welcome_socket.bind(TCP_ADDRESS)
         self.welcome_socket.listen(1)
+        self.welcome_socket.settimeout(3)
         print("Server started, listening on IP address {}\n".format(SERVER_IP))
-        self.thread_handler()
-        self.welcome_socket.close()
+        # self.thread_handler()
+        broadcast_thread = threading.Thread(target=self.broadcast_handler)
+        listen_thread = threading.Thread(target=self.client_handler)
+        broadcast_thread.start()
+        print("started broadcast thread")
+        listen_thread.start()
+        listen_thread.join()
+        broadcast_thread.join()
         self.udp_socket.close()
+        self.welcome_socket.close()
+        
 
 
     def stop(self):
@@ -71,6 +80,7 @@ class Server:
         broadcast_thread = threading.Thread(target=self.broadcast_handler)
         listen_thread = threading.Thread(target=self.client_handler)
         broadcast_thread.start()
+        print("started broadcast thread")
         listen_thread.start()
         listen_thread.join()
         broadcast_thread.join()
@@ -80,18 +90,29 @@ class Server:
         """
         accept only 2 clients per game
         """
+        i=0
         while self.broadcasting:
+            print("client_handler " + str(i))
             if len(self.clients) == 2:
                 break
             else:
+                i += 1
                 try:
+                    print("try")
                     new_tcp_socket, address = self.welcome_socket.accept()
+                    print("new_tcp_socket " , new_tcp_socket)
+                    print("address ", address)
                     client_details = (new_tcp_socket, address)
                     client_name = new_tcp_socket.recv(1024).decode().strip('\n')
                     print(f'Team {client_name} has connected to server!')
                     self.clients[client_name] = client_details
+                    
                 except:
+                    print("failed client_handler")
                     continue 
+            
+        print(self.clients)
+            
          
 
     def broadcast_handler(self):
@@ -100,11 +121,15 @@ class Server:
         """
         message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.tcp_port)
         max_time = time.time() + 10
+        print("in broadcast handler")
+        count = 0
         self.broadcasting = True
         while time.time() < max_time:
             address = ('<broadcast>', DEST_UDP_PORT)
             self.udp_socket.sendto(message, address)
             time.sleep(1)
+            count += 1
+            print("packet num " + str(count) + " was sent!")
         self.broadcasting = False
 
 
@@ -175,10 +200,22 @@ class Server:
         return answer, question
 
 
-# def main():
-    # print("hello server")
+def main():
+    print("hello server")
     # print(get_if_addr(conf.iface)) # This is actually great
+    # print(get_if_addr("eth1"))
+    while True:
+        server = Server()
+        print("Server instance created properly")
+        try:
+            print("Starting server...")
+            server.start()
+            print("Server started properly")
+        except:
+            print("Server failed trying to start")
+            server.stop()
+            continue
 
 if __name__ == '__main__':
-    # main()
-    Server()
+    main()
+    # Server()
