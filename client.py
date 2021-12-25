@@ -3,7 +3,7 @@ import threading
 from scapy.all import *
 
 CLIENT_IP = socket.gethostbyname(socket.gethostname())
-CLIENT_UDP_PORT = 12026
+CLIENT_UDP_PORT = 13117
 CLIENT_TCP_PORT = 2026
 # FORMAT = 'ASCI'
 # ADDRESS = (CLIENT_IP, CLIENT_UDP_PORT)
@@ -16,6 +16,7 @@ class Client:
         explain this shit
         """
         self.ip = CLIENT_IP
+        # self.ip = "132.72.202.2"
         try:
             socket.inet_aton(self.ip)
         except:
@@ -36,14 +37,14 @@ class Client:
         explain this shit
         """
         print("Client started, listening for offer requests...")
-        self.udp_socket.bind((CLIENT_IP, CLIENT_UDP_PORT))
+        self.udp_socket.bind(('0.0.0.0', CLIENT_UDP_PORT))
         # packed_message, server_address = self.udp_socket.recvfrom(1024)
         # print(server_address)
         # print(packed_message)
         while True:
             try:
                 packed_message, server_address = self.udp_socket.recvfrom(1024)
-                message = struct.unpack('Ibh', packed_message) 
+                message = struct.unpack('Ibh', packed_message)
                 magic_cookie = message[0]
                 message_type = message[1]
                 server_port = message[2]
@@ -56,7 +57,7 @@ class Client:
                 except:
                     print("Failed to connect to the server.")
                 try:
-                    self.tcp_socket.send(self.client_name + "\n")
+                    self.tcp_socket.send((self.client_name + "\n").encode())
                 except:
                     self.tcp_socket.close()
                     continue
