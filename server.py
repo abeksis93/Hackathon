@@ -6,10 +6,10 @@ import random
 import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
-SERVER_PORT = 26262
-DEST_UDP_PORT = 12026
+SERVER_TCP_PORT = 16262
+DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
-TCP_ADDRESS = (SERVER_IP, SERVER_PORT)
+TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
 UDP_ADDRESS = (SERVER_IP, 20262)
 MAGIC_COOKIE = 0xabcddcba
 MESSAGE_TYPE = 0x2
@@ -24,57 +24,56 @@ BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
 
 class Server:
+    '''
+    A class representing a server with 2 sockets: UDP and TCP
+    allowing communication with a client for a simple math problems game
+    '''
+
     def __init__(self):
-        """
-        explain this shit
-        """        
+        """ initiate 2 sockets: UDP and TCP and set IP address"""       
         self.ip = SERVER_IP
         try:
             socket.inet_aton(self.ip)
         except:
             print("There was a problem trying to get the server's IP address.")
-        self.port = SERVER_PORT
+        self.tcp_port = SERVER_TCP_PORT
         try:
             self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except:
             print("There is a problem with the server's UPD socket.")
         try:
-            self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.welcome_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except:
             print("There is a problem with the server's TCP socket.")
-        print(self.ip)
         self.broadcasting = False
         self.available = True
         self.clients = {}
 
     def start(self):
-        """
-        explain this shit
-        """
+        """ bind the sockets to the server and start listening for connection requests """
         self.udp_socket.bind(UDP_ADDRESS)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.tcp_socket.bind(TCP_ADDRESS)
-        self.tcp_socket.listen(1)
+        self.welcome_socket.bind(TCP_ADDRESS)
+        self.welcome_socket.listen(1)
+        self.welcome_socket.settimeout(3)
         print("Server started, listening on IP address {}\n".format(SERVER_IP))
         self.thread_handler()
-        self.tcp_socket.close()
         self.udp_socket.close()
+        self.welcome_socket.close()
+        
 
 
     def stop(self):
-        """
-        explain this shit
-        """
-        self.tcp_socket.close()
+        """ stop the server """
+        self.welcome_socket.close()
         self.udp_socket.close()
 
     def thread_handler(self):
-        """
-        explain this shit
-        """
+        """ handeling broadcasting and listening in multithreading """
         broadcast_thread = threading.Thread(target=self.broadcast_handler)
         listen_thread = threading.Thread(target=self.client_handler)
         broadcast_thread.start()
+        print("started broadcast thread")
         listen_thread.start()
         listen_thread.join()
         broadcast_thread.join()
@@ -82,32 +81,89 @@ class Server:
 
     def client_handler(self):
         """
-        explain this shit
+        accept only 2 clients per game
         """
+        i=0
         while self.broadcasting:
-            try:
-                client_details = self.tcp_socket.accept()
-                client_name = client_details[0].recv(1024).strip('\n')
-                print(f'Team {client_name} has connected to server!')
-                self.clients[client_name] = client_details
-            except:
-                continue        
+            print("client_handler " + str(i))
+            if len(self.clients) == 2:
+                break
+            else:
+                i += 1
+                try:
+                    print("try")
+                    new_tcp_socket, address = self.welcome_socket.accept()
+                    print("new_tcp_socket " , new_tcp_socket)
+                    print("address ", address)
+                    client_details = (new_tcp_socket, address)
+                    client_name = new_tcp_socket.recv(1024).decode().strip('\n')
+                    print(f'Team {client_name} has connected to server!')
+                    self.clients[client_name] = client_details
+                    
+                except:
+                    print("failed client_handler")
+                    continue 
+            
+        print(self.clients)
+            
+         
 
     def broadcast_handler(self):
         """
-        explain this shit
+        send offers to connect to clients
         """
-        message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.port)
+        message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.tcp_port)
         max_time = time.time() + 10
+        print("in broadcast handler")
+        count = 0
         self.broadcasting = True
         while time.time() < max_time:
             address = ('<broadcast>', DEST_UDP_PORT)
             self.udp_socket.sendto(message, address)
             time.sleep(1)
+            count += 1
+            print("packet num " + str(count) + " was sent!")
         self.broadcasting = False
 
+
     def competition(self):
-        pass
+        """
+        
+        """
+        answer, question = self.question_generator()
+        player1 = self.clients.keys()[0]
+        player2 = self.clients.keys()[1]
+        message = "Welcome to Quick Maths.\nPlayer 1: {}\nPlayer 2: {}\n==\nPlease answer the following question as fast as you can:\n{}".format(player1, player2, question)
+        try:
+            self.tcp_socket.send(message.encode())
+        except:
+            print("socket connection broken")
+        max_time = time.time() + 10
+        while time.time() < max_time:
+            handle_client1 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[0], answer))
+            handle_client2 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[1], answer))
+            handle_client1.start()
+            handle_client2.start()
+            handle_client1.join(10)
+            handle_client2.join(10)
+            if handle_client1.is_alive() and handle_client2.is_alive():
+                print("Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer))
+                break
+                
+    
+    def competition_handler(self, client_name, answer):
+        """
+        
+        """
+        message = self.clients[client_name][0].recv(1024).decode().strip('\n')
+        if message == answer:
+            print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, client_name))
+        else:
+            for i in range(len(self.clients.keys())):
+                if self.clients[i] != client_name:
+                    print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, self.clients[i]))
+                    break
+        
 
     
     def question_generator(self):
@@ -136,14 +192,23 @@ class Server:
                 question = 'What is {} {} {}?\n'.format(num1, op, num2)
         return answer, question
 
-    def calculator(self):
-        pass
 
-
-# def main():
-    # print("hello server")
+def main():
+    print("hello server")
     # print(get_if_addr(conf.iface)) # This is actually great
+    # print(get_if_addr("eth1"))
+    while True:
+        server = Server()
+        print("Server instance created properly")
+        try:
+            print("Starting server...")
+            server.start()
+            print("Server started properly")
+        except:
+            print("Server failed trying to start")
+            server.stop()
+            continue
 
 if __name__ == '__main__':
-    # main()
-    Server()
+    main()
+    # Server()
