@@ -79,7 +79,14 @@ class Server:
         """
         explain this shit1
         """
-        pass
+        while self.broadcasting:
+            try:
+                client_details = self.tcp_socket.accept()
+                client_name = client_details[0].recv(1024).strip('\n')
+                print(f'Team {client_name} has connected to server!')
+                self.clients[client_name] = client_details
+            except:
+                continue 
 
     def broadcast_handler(self):
         """
