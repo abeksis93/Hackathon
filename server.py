@@ -86,10 +86,10 @@ class Server:
         """
         while self.broadcasting:
             try:
-                client_socket, address = self.tcp_socket.accept()
-                client_name = client_socket.recv(1024).strip('\n')
+                client_details = self.tcp_socket.accept()
+                client_name = client_details[0].recv(1024).strip('\n')
                 print(f'Team {client_name} has connected to server!')
-                self.clients[client_name] = (client_socket, address)
+                self.clients[client_name] = client_details
             except:
                 continue        
 
