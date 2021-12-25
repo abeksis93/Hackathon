@@ -7,9 +7,10 @@ SERVER_IP = socket.gethostbyname(socket.gethostname())
 SERVER_PORT = 26262
 DEST_UDP_PORT = 12026
 FORMAT = 'utf-8'
-ADDRESS = (SERVER_IP, SERVER_PORT)
-MAGIC_COOKIE = "0xabcddcba"
-MESSAGE_TYPE = "0x2"
+TCP_ADDRESS = (SERVER_IP, SERVER_PORT)
+UDP_ADDRESS = (SERVER_IP, 20262)
+MAGIC_COOKIE = 0xabcddcba
+MESSAGE_TYPE = 0x2
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'
 OKCYAN = '\033[96m'
@@ -41,16 +42,16 @@ class Server:
             print("There is a problem with the server's TCP socket.")
         print(self.ip)
         self.broadcasting = False
-        self.available = False
+        self.available = True
 
     def start(self):
         """
         explain this shit
         """
-        self.udp_socket.bind(ADDRESS)
+        self.udp_socket.bind(UDP_ADDRESS)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.tcp_socket.bind(ADDRESS)
-        self.tcp_socket.listen(2)
+        self.tcp_socket.bind(TCP_ADDRESS)
+        self.tcp_socket.listen(1)
         self.thread_handler()
         self.tcp_socket.close()
         self.udp_socket.close()

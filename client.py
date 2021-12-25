@@ -7,8 +7,8 @@ CLIENT_UDP_PORT = 12026
 CLIENT_TCP_PORT = 2026
 # FORMAT = 'ASCI'
 # ADDRESS = (CLIENT_IP, CLIENT_UDP_PORT)
-MAGIC_COOKIE = "0xabcddcba"
-MESSAGE_TYPE = "0x2"
+MAGIC_COOKIE = 0xabcddcba
+MESSAGE_TYPE = 0x2
 
 class Client:
     def __init__(self):
