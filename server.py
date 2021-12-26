@@ -84,7 +84,6 @@ class Server:
         """
         i=0
         while self.broadcasting:
-            print("client_handler " + str(i))
             if len(self.clients) == 2:
                 break
             else:
