@@ -44,15 +44,12 @@ class Client:
         while True:
             try:
                 packed_message, server_address = self.udp_socket.recvfrom(1024)
-                message = struct.unpack('Ibh', packed_message)
-                magic_cookie = message[0]
-                message_type = message[1]
-                server_port = message[2]
+                magic_cookie, message_type, server_port = struct.unpack('Ibh', packed_message)
                 if magic_cookie != MAGIC_COOKIE or message_type != MESSAGE_TYPE:
                     continue
-                print("Received offer from " + server_address[0] + ", attempting to connect...")
+                server_socket = (server_address[0], server_port)
                 try:
-                    self.tcp_socket.connect(server_address[0], server_port)
+                    self.tcp_socket.connect(server_socket)
                     print("Successfully connected to the server.\nServer's IP address: " + server_address[0])
                 except:
                     print("Failed to connect to the server.")
@@ -72,8 +69,10 @@ class Client:
         """
         explain this shit
         """
+        print("In quick math")
         # stop after finishing the game
         # self.stop() //UNCOMMENT AFTER IMPLEMENTATION
+        
         pass
 
 
@@ -84,9 +83,15 @@ class Client:
         self.tcp_socket.close()
 
 def main():
-    # while True:
-    client = Client()
-    client.start()
+    while True:
+        client = Client()
+        client.start()
+        try:
+            client.quick_math()
+            # sleep(5)
+        except:
+            # traceback.print_exc()
+            continue
     # pass
 
 

@@ -60,6 +60,8 @@ class Server:
         self.thread_handler()
         self.udp_socket.close()
         self.welcome_socket.close()
+        
+
 
     def stop(self):
         """ stop the server """
