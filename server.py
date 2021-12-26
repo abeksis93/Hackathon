@@ -176,8 +176,8 @@ class Server:
         handle_client2 = threading.Thread(target=self.competition_handler, args=(player2, answer,))
         handle_client1.start()
         handle_client2.start()
-        handle_client1.join(10)
-        handle_client2.join(10)
+        handle_client1.join(5)
+        handle_client2.join(5)
         print("self.clients_answers: ", self.clients_answers)
 
         # if handle_client1.is_alive() and handle_client2.is_alive():
@@ -188,9 +188,10 @@ class Server:
             result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[0])
             # break
         elif len(self.clients_answers) >= 2:
-            if int(list(self.clients_answers.values())[1]) == answer:
+            if int(list(self.clients_answers.values())[1]) != answer and int(list(self.clients_answers.values())[0]) != answer:
+                result = "Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer)
+            elif int(list(self.clients_answers.values())[1]) == answer:
                 result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[1])
-                # break
             else:
                 for i in range(len(self.clients.keys())):
                     if list(self.clients.keys())[i] != list(self.clients_answers.keys())[i]:
