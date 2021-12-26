@@ -73,7 +73,6 @@ class Server:
         broadcast_thread = threading.Thread(target=self.broadcast_handler)
         listen_thread = threading.Thread(target=self.client_handler)
         broadcast_thread.start()
-        print("started broadcast thread")
         listen_thread.start()
         listen_thread.join()
         broadcast_thread.join()
@@ -91,20 +90,14 @@ class Server:
             else:
                 i += 1
                 try:
-                    print("try")
                     new_tcp_socket, address = self.welcome_socket.accept()
-                    print("new_tcp_socket " , new_tcp_socket)
-                    print("address ", address)
                     client_details = (new_tcp_socket, address)
                     client_name = new_tcp_socket.recv(1024).decode().strip('\n')
-                    print(f'Team {client_name} has connected to server!')
+                    print("Team " + str(client_name) + " has connected to server!")
                     self.clients[client_name] = client_details
                     
                 except:
-                    print("failed client_handler")
                     continue 
-            
-        print(self.clients)
             
          
 
