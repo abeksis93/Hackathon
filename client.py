@@ -50,7 +50,7 @@ class Client:
                 server_socket = (server_address[0], server_port)
                 try:
                     self.tcp_socket.connect(server_socket)
-                    print("Successfully connected to the server.\nServer's IP address: " + server_address[0])
+                    print("Successfully connected to the server. Server's IP address: " + server_address[0])
                 except:
                     print("Failed to connect to the server.")
                 try:
