@@ -1,6 +1,8 @@
 import socket
 import threading
 from scapy.all import *
+from threading import Timer
+
 
 CLIENT_IP = socket.gethostbyname(socket.gethostname())
 CLIENT_UDP_PORT = 13117
@@ -65,7 +67,7 @@ class Client:
                 continue
         self.udp_socket.close()
 
-    
+
 
     def quick_math(self):
         """
@@ -75,10 +77,13 @@ class Client:
         try:
             message = self.tcp_socket.recv(1024).decode()
             print(message)
-            return
+            answer = input("enter answer: ")
+            # print("YOUR ANSWER IS : ", answer)
+            
+            # return
         except:
             self.stop() # stop after finishing the game
-            return
+            # return
 
     def stop(self):
         """
