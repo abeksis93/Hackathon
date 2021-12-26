@@ -6,12 +6,7 @@ import random
 import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
-<<<<<<< HEAD
-SERVER_TCP_PORT = 16262
-=======
-# SERVER_IP = get_if_addr('eth1')
-SERVER_TCP_PORT = 26262
->>>>>>> 6adb7812b6ce29d60a908360ef56f86ac989a3a2
+SERVER_TCP_PORT = 12026
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
 TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
@@ -62,18 +57,9 @@ class Server:
         self.welcome_socket.listen(1)
         self.welcome_socket.settimeout(3)
         print("Server started, listening on IP address {}\n".format(SERVER_IP))
-        # self.thread_handler()
-        broadcast_thread = threading.Thread(target=self.broadcast_handler)
-        listen_thread = threading.Thread(target=self.client_handler)
-        broadcast_thread.start()
-        print("started broadcast thread")
-        listen_thread.start()
-        listen_thread.join()
-        broadcast_thread.join()
+        self.thread_handler()
         self.udp_socket.close()
         self.welcome_socket.close()
-        
-
 
     def stop(self):
         """ stop the server """
