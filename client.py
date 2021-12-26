@@ -37,6 +37,8 @@ class Client:
         explain this shit
         """
         print("Client started, listening for offer requests...")
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', CLIENT_UDP_PORT))
         # packed_message, server_address = self.udp_socket.recvfrom(1024)
         # print(server_address)
@@ -70,11 +72,13 @@ class Client:
         explain this shit
         """
         print("In quick math")
-        # stop after finishing the game
-        # self.stop() //UNCOMMENT AFTER IMPLEMENTATION
-        
-        pass
-
+        try:
+            message = self.tcp_socket.recv(1024).decode()
+            print(message)
+            return
+        except:
+            self.stop() # stop after finishing the game
+            return
 
     def stop(self):
         """

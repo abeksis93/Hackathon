@@ -10,7 +10,8 @@ SERVER_TCP_PORT = 12026
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
 TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
-UDP_ADDRESS = (SERVER_IP, 20262)
+UDP_ADDRESS = (SERVER_IP, DEST_UDP_PORT)
+# UDP_ADDRESS = ('', DEST_UDP_PORT)
 MAGIC_COOKIE = 0xabcddcba
 MESSAGE_TYPE = 0x2
 HEADER = '\033[95m'
@@ -97,7 +98,7 @@ class Server:
                     
                 except:
                     continue 
-            
+        # print(self.clients)
          
 
     def broadcast_handler(self):
@@ -118,11 +119,15 @@ class Server:
         
         """
         answer, question = self.question_generator()
-        player1 = self.clients.keys()[0]
-        player2 = self.clients.keys()[1]
+        lst = list(self.clients.keys())
+        player1 = lst[0]
+        player2 = lst[1]
         message = "Welcome to Quick Maths.\nPlayer 1: {}\nPlayer 2: {}\n==\nPlease answer the following question as fast as you can:\n{}".format(player1, player2, question)
         try:
-            self.tcp_socket.send(message.encode())
+            # self.welcome_socket.send(message.encode())
+            # self.clients[pla]
+            list(self.clients[player1])[0].send(message.encode())
+            list(self.clients[player2])[0].send(message.encode())
         except:
             print("socket connection broken")
         max_time = time.time() + 10
@@ -194,6 +199,13 @@ def main():
         except:
             print("Server failed trying to start")
             server.stop()
+            continue
+        try:
+            print("Starting math competition...")
+            server.competition()
+            time.sleep(8)
+        except:
+            print("error in competition")
             continue
 
 if __name__ == '__main__':
