@@ -6,7 +6,12 @@ import random
 import operator
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
+<<<<<<< HEAD
 SERVER_TCP_PORT = 16262
+=======
+# SERVER_IP = get_if_addr('eth1')
+SERVER_TCP_PORT = 26262
+>>>>>>> 6adb7812b6ce29d60a908360ef56f86ac989a3a2
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
 TCP_ADDRESS = (SERVER_IP, SERVER_TCP_PORT)
