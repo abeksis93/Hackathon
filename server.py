@@ -1,9 +1,11 @@
+from re import S
 import socket
 import threading
 from scapy.all import *
 from termcolor import *
 import random
 import operator
+import queue
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())
 SERVER_TCP_PORT = 12026
@@ -49,6 +51,7 @@ class Server:
         self.broadcasting = False
         self.available = True
         self.clients = {}
+        self.clients_answers = {}
 
     def start(self):
         """ bind the sockets to the server and start listening for connection requests """
@@ -110,9 +113,43 @@ class Server:
         self.broadcasting = True
         while time.time() < max_time:
             self.udp_socket.sendto(message, ('<broadcast>', DEST_UDP_PORT))
-            time.sleep(1)
+            time.sleep(0.1)
         self.broadcasting = False
 
+
+    # def competition(self):
+    #     """
+        
+    #     """
+    #     answer, question = self.question_generator()
+    #     lst = list(self.clients.keys())
+    #     player1 = lst[0]
+    #     player2 = lst[1]
+    #     player1_socket = list(self.clients[player1])[0]
+    #     player2_socket = list(self.clients[player2])[0]
+    #     message = "Welcome to Quick Maths.\nPlayer 1: {}\nPlayer 2: {}\n==\nPlease answer the following question as fast as you can:\n{}".format(player1, player2, question)
+    #     handle_client1 = threading.Thread(target=self.competition_handler, args=(player1, message, answer,))
+    #     handle_client1.start()
+    #     handle_client2 = threading.Thread(target=self.competition_handler, args=(player2, message, answer,))
+    #     handle_client2.start()
+
+       
+    #     try:
+    #         # self.welcome_socket.send(message.encode())
+    #         # self.clients[pla]
+    #         player1_socket.send(message.encode())
+    #         player2_socket.send(message.encode())
+    #     except:
+    #         print("socket connection broken")
+    #     max_time = time.time() + 10
+    #     while time.time() < max_time:
+
+    #         handle_client1.join()
+    #         handle_client2.join()
+    #         print("self.clients_answers: ", self.clients_answers)
+    #         if handle_client1.is_alive() and handle_client2.is_alive():
+    #             print("Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer))
+    #             break
 
     def competition(self):
         """
@@ -122,39 +159,74 @@ class Server:
         lst = list(self.clients.keys())
         player1 = lst[0]
         player2 = lst[1]
+        player1_socket = list(self.clients[player1])[0]
+        player2_socket = list(self.clients[player2])[0]
+
         message = "Welcome to Quick Maths.\nPlayer 1: {}\nPlayer 2: {}\n==\nPlease answer the following question as fast as you can:\n{}".format(player1, player2, question)
         try:
             # self.welcome_socket.send(message.encode())
             # self.clients[pla]
-            list(self.clients[player1])[0].send(message.encode())
-            list(self.clients[player2])[0].send(message.encode())
+            player1_socket.send(message.encode())
+            player2_socket.send(message.encode())
         except:
             print("socket connection broken")
-        max_time = time.time() + 10
-        while time.time() < max_time:
-            handle_client1 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[0], answer))
-            handle_client2 = threading.Thread(target=self.competition_handler, args=(self.clients.keys()[1], answer))
-            handle_client1.start()
-            handle_client2.start()
-            handle_client1.join(10)
-            handle_client2.join(10)
-            if handle_client1.is_alive() and handle_client2.is_alive():
-                print("Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer))
-                break
-                
+        # max_time = time.time() + 10
+        # while time.time() < max_time:
+        handle_client1 = threading.Thread(target=self.competition_handler, args=(player1, answer,))
+        handle_client2 = threading.Thread(target=self.competition_handler, args=(player2, answer,))
+        handle_client1.start()
+        handle_client2.start()
+        handle_client1.join(10)
+        handle_client2.join(10)
+        print("self.clients_answers: ", self.clients_answers)
+
+        # if handle_client1.is_alive() and handle_client2.is_alive():
+        if len(self.clients_answers) == 0:
+            result = "Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer)
+            # break
+        elif int(list(self.clients_answers.values())[0]) == answer:
+            result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[0])
+            # break
+        elif len(self.clients_answers) >= 2:
+            if int(list(self.clients_answers.values())[1]) == answer:
+                result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[1])
+                # break
+            else:
+                for i in range(len(self.clients.keys())):
+                    if list(self.clients.keys())[i] != list(self.clients_answers.keys())[i]:
+                        result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients.keys())[i])
+                        break
+        print(result)
+        player1_socket.send(result.encode())
+        player2_socket.send(result.encode())
+        player1_socket.close()
+        player2_socket.close()
+        self.clients = {}
+        self.clients_answers = {}
+
+        print("end of competition")
     
     def competition_handler(self, client_name, answer):
         """
         
         """
-        message = self.clients[client_name][0].recv(1024).decode().strip('\n')
-        if message == answer:
-            print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, client_name))
+        try:
+            message = self.clients[client_name][0].recv(1024).decode()
+        except:
+            message = ''
+        if message == '':
+            return
         else:
-            for i in range(len(self.clients.keys())):
-                if self.clients[i] != client_name:
-                    print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, self.clients[i]))
-                    break
+            self.clients_answers[client_name] = message.strip('\n')
+        return
+        # return answer
+        # if message == answer:
+        #     print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, client_name))
+        # else:
+        #     for i in range(len(self.clients.keys())):
+        #         if list(self.clients.keys())[i] != client_name:
+        #             print("Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients.keys())[i]))
+        #             break
         
 
     
@@ -203,7 +275,7 @@ def main():
         try:
             print("Starting math competition...")
             server.competition()
-            time.sleep(8)
+            # time.sleep(8)
         except:
             print("error in competition")
             continue

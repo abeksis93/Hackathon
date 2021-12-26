@@ -1,7 +1,7 @@
 import socket
 import threading
 from scapy.all import *
-from threading import Timer
+from inputimeout import inputimeout, TimeoutOccurred
 
 
 CLIENT_IP = socket.gethostbyname(socket.gethostname())
@@ -73,13 +73,25 @@ class Client:
         """
         explain this shit
         """
-        print("In quick math")
+        # print("In quick math")
         try:
             message = self.tcp_socket.recv(1024).decode()
             print(message)
-            answer = input("enter answer: ")
+            # Timeout = 10
+            # end_time = time.time() + Timeout
+            # answer = None
+            # while time.time() < end_time or answer != None:
+            try:
+                answer = inputimeout(prompt='Enter your answer: ', timeout=10)
+            except TimeoutOccurred:
+                answer = ''
+                # answer = input("enter answer: ")
+            self.tcp_socket.send(answer.encode())
+            result = self.tcp_socket.recv(1024).decode()
+            print(result)
+
             # print("YOUR ANSWER IS : ", answer)
-            
+
             # return
         except:
             self.stop() # stop after finishing the game
