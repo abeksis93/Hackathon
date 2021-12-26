@@ -1,6 +1,8 @@
 import socket
 import threading
 from scapy.all import *
+from inputimeout import inputimeout, TimeoutOccurred
+
 
 CLIENT_IP = socket.gethostbyname(socket.gethostname())
 CLIENT_UDP_PORT = 13117
@@ -37,6 +39,8 @@ class Client:
         explain this shit
         """
         print("Client started, listening for offer requests...")
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', CLIENT_UDP_PORT))
         # packed_message, server_address = self.udp_socket.recvfrom(1024)
         # print(server_address)
@@ -63,18 +67,35 @@ class Client:
                 continue
         self.udp_socket.close()
 
-    
+
 
     def quick_math(self):
         """
         explain this shit
         """
-        print("In quick math")
-        # stop after finishing the game
-        # self.stop() //UNCOMMENT AFTER IMPLEMENTATION
-        
-        pass
+        # print("In quick math")
+        try:
+            message = self.tcp_socket.recv(1024).decode()
+            print(message)
+            # Timeout = 10
+            # end_time = time.time() + Timeout
+            # answer = None
+            # while time.time() < end_time or answer != None:
+            try:
+                answer = inputimeout(prompt='Enter your answer: ', timeout=10)
+            except TimeoutOccurred:
+                answer = ''
+                # answer = input("enter answer: ")
+            self.tcp_socket.send(answer.encode())
+            result = self.tcp_socket.recv(1024).decode()
+            print(result)
 
+            # print("YOUR ANSWER IS : ", answer)
+
+            # return
+        except:
+            self.stop() # stop after finishing the game
+            # return
 
     def stop(self):
         """
