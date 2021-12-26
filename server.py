@@ -107,15 +107,10 @@ class Server:
         """
         message = struct.pack('Ibh', MAGIC_COOKIE, MESSAGE_TYPE, self.tcp_port)
         max_time = time.time() + 10
-        print("in broadcast handler")
-        count = 0
         self.broadcasting = True
         while time.time() < max_time:
-            address = ('<broadcast>', DEST_UDP_PORT)
-            self.udp_socket.sendto(message, address)
+            self.udp_socket.sendto(message, ('<broadcast>', DEST_UDP_PORT))
             time.sleep(1)
-            count += 1
-            print("packet num " + str(count) + " was sent!")
         self.broadcasting = False
 
 
