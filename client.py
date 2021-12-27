@@ -1,10 +1,11 @@
 import socket
 import threading
 from scapy.all import *
-from inputimeout import inputimeout, TimeoutOccurred
+# from inputimeout import inputimeout, TimeoutOccurred
+import getch
 
 
-CLIENT_IP = socket.gethostbyname(socket.gethostname())
+CLIENT_IP = get_if_addr('eth1')
 CLIENT_UDP_PORT = 13117
 CLIENT_TCP_PORT = 2026
 # FORMAT = 'ASCI'
@@ -40,7 +41,8 @@ class Client:
         """
         print("Client started, listening for offer requests...")
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        # self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.udp_socket.bind(('0.0.0.0', CLIENT_UDP_PORT))
         # packed_message, server_address = self.udp_socket.recvfrom(1024)
         # print(server_address)
@@ -81,11 +83,11 @@ class Client:
             # end_time = time.time() + Timeout
             # answer = None
             # while time.time() < end_time or answer != None:
-            try:
-                answer = inputimeout(prompt='Enter your answer: ', timeout=10)
-            except TimeoutOccurred:
-                answer = ''
-                # answer = input("enter answer: ")
+            # try:
+            #     answer = inputimeout(prompt='Enter your answer: ', timeout=10)
+            # except TimeoutOccurred:
+            #     answer = ''
+            answer = getch.getch()
             self.tcp_socket.send(answer.encode())
             result = self.tcp_socket.recv(1024).decode()
             print(result)
@@ -102,6 +104,8 @@ class Client:
         explain this shit
         """
         self.tcp_socket.close()
+        self.udp_socket.close()
+
 
 def main():
     while True:
@@ -110,8 +114,9 @@ def main():
         try:
             client.quick_math()
             # sleep(5)
-        except:
+        finally:
             # traceback.print_exc()
+            client.stop()
             continue
     # pass
 
