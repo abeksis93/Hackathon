@@ -1,13 +1,13 @@
-from re import S
+# from re import S
 import socket
 import threading
 from scapy.all import *
-from termcolor import *
+# from termcolor import *
 import random
 import operator
-import queue
+# import queue
 
-SERVER_IP = socket.gethostbyname(socket.gethostname())
+SERVER_IP = get_if_addr('eth1')
 SERVER_TCP_PORT = 12026
 DEST_UDP_PORT = 13117
 FORMAT = 'utf-8'
@@ -53,10 +53,12 @@ class Server:
         self.clients = {}
         self.clients_answers = {}
 
+
     def start(self):
         """ bind the sockets to the server and start listening for connection requests """
-        self.udp_socket.bind(UDP_ADDRESS)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        self.udp_socket.bind(UDP_ADDRESS)
         self.welcome_socket.bind(TCP_ADDRESS)
         self.welcome_socket.listen(1)
         self.welcome_socket.settimeout(3)
@@ -66,11 +68,11 @@ class Server:
         self.welcome_socket.close()
         
 
-
     def stop(self):
         """ stop the server """
         self.welcome_socket.close()
         self.udp_socket.close()
+
 
     def thread_handler(self):
         """ handeling broadcasting and listening in multithreading """
@@ -184,9 +186,12 @@ class Server:
         if len(self.clients_answers) == 0:
             result = "Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer)
             # break
-        elif int(list(self.clients_answers.values())[0]) == answer:
-            result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[0])
-            # break
+        elif len(self.clients_answers) == 1:
+            if int(list(self.clients_answers.values())[0]) == answer:
+                result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients_answers.keys())[0])
+                # break
+            else:
+                result = "Game over!\nThe correct answer was {}!\nCongratulations to the winner: {}".format(answer, list(self.clients.keys())[1])
         elif len(self.clients_answers) >= 2:
             if int(list(self.clients_answers.values())[1]) != answer and int(list(self.clients_answers.values())[0]) != answer:
                 result = "Game over!\nThe correct answer was {}!\nIt's a draw!".format(answer)
